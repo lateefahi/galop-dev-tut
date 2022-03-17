@@ -42,11 +42,11 @@ const windForecast = new ImageryTileLayer({url: "https://tiledimageservices.arcg
  title: "Wind",
  renderer: {
     type: "animated-flow", // autocasts to new AnimatedFlowRenderer
-    lineWidth: "2px",
-    lineColor: [50, 120, 240],
+    lineWidth: "0.5px",
+    lineColor: [212, 123, 34],
     density: 1
 },
-effect: "bloom(2, 0.25px, 30)",
+effect: "bloom(2, 0.25px, 10)",
 
 });
 
@@ -159,15 +159,19 @@ const view = new MapView({
     center: new Point({ x: 1795999, y: 5457405, spatialReference: { wkid: 2193 } }), // nztm coordinates
     zoom: 10, // Zoom level
     container: "viewDiv", // Div element
+    padding: {
+        left: 49,
+      },
 });
 
 const elevationProfile = new ElevationProfile({
     view: view,
-    profiles: [{ type: "ground" }]
+    profiles: [{ type: "ground" }],
+    container: "profile",
 });
 
 view.when(function () {
-    view.ui.add(elevationProfile);
+    //view.ui.add(elevationProfile);
 });
 view.when(() => {
     const layerList = new LayerList({
@@ -176,6 +180,8 @@ view.when(() => {
 
     // Add widget to the top right corner of the view
     view.ui.add(layerList, "top-right");
+
+    
 });
 const track = new Track({
     view: view,
@@ -193,7 +199,6 @@ const track = new Track({
     useHeadingEnabled: false
   });
 
-  view.ui.add(track, "top-left");
 
 
   const basemapGallery = new BasemapGallery({
@@ -202,5 +207,35 @@ const track = new Track({
 });
 view.ui.add(basemapGallery, "top-right");
 
+let activeWidget;
+
+// here we define the code which should run when our action bar is clicked
+const handleActionBarClick = ({ target }) => {
+  // make sure we are clicking on a calcite action button
+  if (target.tagName !== "CALCITE-ACTION") {
+    return;
+  }
+
+  // check if there is an active widget and if so hide it
+  if (activeWidget) {
+    document.querySelector(
+      `[data-action-id=${activeWidget}]`
+    ).active = false;
+    document.querySelector(`[data-panel-id=${activeWidget}]`).hidden = true;
+  }
+
+  // determine which widget button was clicked. If it's the button for the currently active widget
+  // then we just set the active widget to null (as we already hid it), else we hide the current widget and show the next
+  const nextWidget = target.dataset.actionId;
+  if (nextWidget !== activeWidget) {
+    document.querySelector(`[data-action-id=${nextWidget}]`).active = true;
+    document.querySelector(`[data-panel-id=${nextWidget}]`).hidden = false;
+    activeWidget = nextWidget;
+  } else {
+    activeWidget = null;
+  }
+};
+// here we actually add the code to the action bar
+document.querySelector("calcite-action-bar").addEventListener("click", handleActionBarClick);
 
 });
